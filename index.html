@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="application/xhtml+xml; charset=utf-8"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script>
+    <script src="jszip.min.js"></script>
+    <script src="FileSaver.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    <title>info-beamer OS configuration tool</title>
+  </head>
+  <body>
+    <div id='editor'/>
+    <script type="text/jsx">
+      function updated_object(obj, key, value) {
+        var copy = JSON.parse(JSON.stringify(obj));
+        copy[key] = value;
+        return copy;
+      }
+
+      var Resolution = React.createClass({
+        handleUpdateGroup: function(event) {
+          var group = event.target.value;
+          if (group == "CEA") {
+            this.props.handleUpdateResolution("CEA 31");
+          } else if (group == "DMT") {
+            this.props.handleUpdateResolution("DMT 82");
+          } else {
+            this.props.handleUpdateResolution(null);
+          }
+        }, 
+
+        handleUpdateCEAMode: function(event) {
+          this.props.handleUpdateResolution("CEA " + event.target.value);
+        },
+
+        handleUpdateDMTMode: function(event) {
+          this.props.handleUpdateResolution("DMT " + event.target.value);
+        },
+
+        render: function() {
+          var CEA_MODES = [
+            ["8", "240p 60Hz"], ["9", "240p 60Hz 16:9 aspect ratio"], ["12", "240p 60Hz pixel quadrupling"], ["13", "240p 60Hz pixel quadrupling, 16:9 aspect ratio"], ["23", "288p 50Hz"], ["24", "288p 50Hz 16:9 aspect ratio"], ["27", "288p 50Hz pixel quadrupling"], ["28", "288p 50Hz pixel quadrupling, 16:9 aspect ratio"], ["6", "480i 60Hz"], ["7", "480i 60Hz 16:9 aspect ratio"], ["10", "480i 60Hz pixel quadrupling"], ["11", "480i 60Hz pixel quadrupling, 16:9 aspect ratio"], ["50", "480i 120Hz"], ["51", "480i 120Hz 16:9 aspect ratio"], ["58", "480i 240Hz"], ["59", "480i 240Hz 16:9 aspect ratio"], ["2", "480p 60Hz"], ["3", "480p 60Hz 16:9 aspect ratio"], ["14", "480p 60Hz pixel doubling"], ["15", "480p 60Hz pixel doubling, 16:9 aspect ratio"], ["35", "480p 60Hz pixel quadrupling"], ["36", "480p 60Hz pixel quadrupling, 16:9 aspect ratio"], ["48", "480p 120Hz"], ["49", "480p 120Hz 16:9 aspect ratio"], ["56", "480p 240Hz"], ["57", "480p 240Hz 16:9 aspect ratio"], ["21", "576i 50Hz"], ["22", "576i 50Hz 16:9 aspect ratio"], ["25", "576i 50Hz pixel quadrupling"], ["26", "576i 50Hz pixel quadrupling, 16:9 aspect ratio"], ["44", "576i 100Hz"], ["45", "576i 100Hz 16:9 aspect ratio"], ["54", "576i 200Hz"], ["55", "576i 200Hz 16:9 aspect ratio"], ["17", "576p 50Hz"], ["18", "576p 50Hz 16:9 aspect ratio"], ["29", "576p 50Hz pixel doubling"], ["30", "576p 50Hz pixel doubling, 16:9 aspect ratio"], ["37", "576p 50Hz pixel quadrupling"], ["38", "576p 50Hz pixel quadrupling, 16:9 aspect ratio"], ["42", "576p 100Hz"], ["43", "576p 100Hz 16:9 aspect ratio"], ["52", "576p 200Hz"], ["53", "576p 200Hz 16:9 aspect ratio"], ["19", "720p 50Hz"], ["4", "720p 60Hz"], ["41", "720p 100Hz"], ["47", "720p 120Hz"], ["20", "1080i 50Hz"], ["39", "1080i 50Hz reduced blanking"], ["5", "1080i 60Hz"], ["40", "1080i 100Hz"], ["46", "1080i 120Hz"], ["32", "1080p 24Hz"], ["33", "1080p 25Hz"], ["34", "1080p 30Hz"], ["31", "1080p 50Hz"], ["16", "1080p 60Hz"], ["1", "VGA (640x480)"]
+          ];
+          var DMT_MODES = [
+            ["1", "640x350 85Hz"], ["2", "640x400 85Hz"], ["4", "640x480 60Hz"], ["5", "640x480 72Hz"], ["6", "640x480 75Hz"], ["7", "640x480 85Hz"], ["3", "720x400 85Hz"], ["8", "800x600 56Hz"], ["9", "800x600 60Hz"], ["10", "800x600 72Hz"], ["11", "800x600 75Hz"], ["12", "800x600 85Hz"], ["13", "800x600 120Hz"], ["14", "848x480 60Hz"], ["15", "1024x768 43Hz incompatible with the Raspberry Pi"], ["16", "1024x768 60Hz"], ["17", "1024x768 70Hz"], ["18", "1024x768 75Hz"], ["19", "1024x768 85Hz"], ["20", "1024x768 120Hz"], ["21", "1152x864 75Hz"], ["85", "1280x720 60Hz 720p"], ["23", "1280x768 60Hz"], ["24", "1280x768 75Hz"], ["25", "1280x768 85Hz"], ["26", "1280x768 120Hz reduced blanking"], ["22", "1280x768 reduced blanking"], ["28", "1280x800 60Hz"], ["29", "1280x800 75Hz"], ["30", "1280x800 85Hz"], ["31", "1280x800 120Hz reduced blanking"], ["27", "1280x800 reduced blanking"], ["32", "1280x960 60Hz"], ["33", "1280x960 85Hz"], ["34", "1280x960 120Hz reduced blanking"], ["35", "1280x1024 60Hz"], ["36", "1280x1024 75Hz"], ["37", "1280x1024 85Hz"], ["38", "1280x1024 120Hz reduced blanking"], ["39", "1360x768 60Hz"], ["40", "1360x768 120Hz reduced blanking"], ["81", "1366x768 60Hz"], ["86", "1366x768 reduced blanking"], ["42", "1400x1050 60Hz"], ["43", "1400x1050 75Hz"], ["44", "1400x1050 85Hz"], ["45", "1400x1050 120Hz reduced blanking"], ["41", "1400x1050 reduced blanking"], ["47", "1440x900 60Hz"], ["48", "1440x900 75Hz"], ["49", "1440x900 85Hz"], ["50", "1440x900 120Hz reduced blanking"], ["46", "1440x900 reduced blanking"], ["83", "1600x900 reduced blanking"], ["51", "1600x1200 60Hz"], ["52", "1600x1200 65Hz"], ["53", "1600x1200 70Hz"], ["54", "1600x1200 75Hz"], ["55", "1600x1200 85Hz"], ["56", "1600x1200 120Hz reduced blanking"], ["58", "1680x1050 60Hz"], ["59", "1680x1050 75Hz"], ["60", "1680x1050 85Hz"], ["61", "1680x1050 120Hz reduced blanking"], ["57", "1680x1050 reduced blanking"], ["62", "1792x1344 60Hz"], ["63", "1792x1344 75Hz"], ["64", "1792x1344 120Hz reduced blanking"], ["65", "1856x1392 60Hz"], ["66", "1856x1392 75Hz"], ["67", "1856x1392 120Hz reduced blanking"], ["82", "1920x1080 60Hz 1080p"], ["69", "1920x1200 60Hz"], ["70", "1920x1200 75Hz"], ["71", "1920x1200 85Hz"], ["72", "1920x1200 120Hz reduced blanking"], ["68", "1920x1200 reduced blanking"], ["73", "1920x1440 60Hz"], ["74", "1920x1440 75Hz"], ["75", "1920x1440 120Hz reduced blanking"], ["84", "2048x1152 reduced blanking"], ["77", "2560x1600 60Hz"], ["78", "2560x1600 75Hz"], ["79", "2560x1600 85Hz"], ["80", "2560x1600 120Hz reduced blanking"], ["76", "2560x1600 reduced blanking"]
+          ];
+
+          var group, mode;
+
+          if (this.props.resolution == null) {
+            group = "autodetect";
+            mode = null;
+          } else {
+            var splitted = this.props.resolution.split(" ");
+            group = splitted[0];
+            mode = splitted[1];
+          }
+
+          var modeGui;
+          if (group == "CEA") {
+            modeGui = (
+              <select className="form-control" onChange={this.handleUpdateCEAMode} value={mode}>
+                {CEA_MODES.map(function(mode) {
+                  return (
+                    <option key={mode[0]} value={mode[0]}>{mode[1]}</option>
+                  );
+                })}
+              </select>
+            );
+          } else if (group == "DMT") {
+            modeGui = (
+              <select className="form-control" onChange={this.handleUpdateDMTMode} value={mode}>
+                {DMT_MODES.map(function(mode) {
+                  return (
+                    <option key={mode[0]} value={mode[0]}>{mode[1]}</option>
+                  );
+                })}
+              </select>
+            );
+          }
+
+          return (
+            <div className="panel panel-default">
+              <div className="panel-heading">
+                <h3 className="panel-title">Screen resolution</h3>
+              </div>
+              <div className="panel-body">
+                <form className="form-inline">
+                  <select className="form-control" onChange={this.handleUpdateGroup} value={this.props.channel}>
+                    <option value="autodetect">Auto detect</option>
+                    <option value="CEA">CEA (TVs)</option>
+                    <option value="DMT">DMT (Monitors)</option>
+                  </select>
+                  &nbsp;
+                  {modeGui}
+                </form>
+              </div>
+            </div>
+          );
+        }
+      });
+
+      var Channel = React.createClass({
+        handleSelectChannel: function(event) {
+          this.props.handleUpdateChannel(event.target.value);
+        },
+
+        render: function() {
+          return (
+            <div className="panel panel-default">
+              <div className="panel-heading">
+                <h3 className="panel-title">Release channel</h3>
+              </div>
+              <div className="panel-body">
+                <form className="form-inline">
+                  <select className="form-control" onChange={this.handleSelectChannel} value={this.props.channel}>
+                    <option value="stable">Stable (recommended)</option>
+                    <option value="testing">Testing</option>
+                  </select>
+                </form>
+              </div>
+            </div>
+          );
+        }
+      });
+
+      var Network = React.createClass({
+        handleEnableManual: function(event) {
+          this.props.handleUpdateNetwork({addr: "", mask: "", gw: "", dns: "8.8.8.8"});
+          event.preventDefault();
+        },
+
+        handleDisableManual: function(event) {
+          this.props.handleUpdateNetwork(null);
+          event.preventDefault();
+        },
+
+        handleUpdateAddr: function(event) {
+          this.props.handleUpdateNetwork(updated_object(this.props.network, 'addr', event.target.value))
+        },
+
+        handleUpdateMask: function(event) {
+          this.props.handleUpdateNetwork(updated_object(this.props.network, 'mask', event.target.value))
+        },
+
+        handleUpdateGateway: function(event) {
+          this.props.handleUpdateNetwork(updated_object(this.props.network, 'gw', event.target.value))
+        },
+
+        handleUpdateDNS: function(event) {
+          this.props.handleUpdateNetwork(updated_object(this.props.network, 'dns', event.target.value))
+        },
+
+        render: function() {
+          var networkGui = (
+            <div>
+              <button className="btn btn-xs" onClick={this.handleEnableManual}>Set manual network configuration</button>
+              <br/><br/>
+              DHCP is used to configure networking for your PI.
+            </div>
+          );
+          if (this.props.network != null) {
+            networkGui = (
+              <form>
+                <button className="btn btn-xs" onClick={this.handleDisableManual}>Revert to DHCP</button>
+                <br/><br/>
+                <div className="form-group">
+                  <label htmlFor="addr">IP Address</label>
+                  <input type="text" className="form-control" id="addr"
+                    placeholder="192.168.1.100" value={this.props.network.addr}
+                    onChange={this.handleUpdateAddr}/>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="mask">Network Mask</label>
+                  <input type="text" className="form-control" id="mask"
+                    placeholder="255.255.255.0" value={this.props.network.mask}
+                    onChange={this.handleUpdateMask}/>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="gw">Gateway IP Address</label>
+                  <input type="text" className="form-control" id="gw"
+                    placeholder="192.168.1.1" value={this.props.network.gw}
+                    onChange={this.handleUpdateGateway}/>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="dns">DNS Server IP</label>
+                  <input type="text" className="form-control" id="dns"
+                    placeholder="8.8.8.8" value={this.props.network.dns}
+                    onChange={this.handleUpdateDNS}/>
+                </div>
+              </form>
+            );
+          }
+          return (
+            <div className="panel panel-default">
+              <div className="panel-heading">
+                <h3 className="panel-title">Network configuration</h3>
+              </div>
+              <div className="panel-body">
+                {networkGui}
+              </div>
+            </div>
+          );
+        }
+      });
+
+      var Wifi = React.createClass({
+        handleEnableWifi: function(event) {
+          this.props.handleUpdateWifi({ssid: "", password: ""});
+          event.preventDefault();
+        },
+
+        handleDisableWifi: function(event) {
+          this.props.handleUpdateWifi(null);
+          event.preventDefault();
+        },
+
+        handleUpdateSSID: function(event) {
+          this.props.handleUpdateWifi(updated_object(this.props.wifi, 'ssid', event.target.value))
+        },
+
+        handleUpdatePassword: function(event) {
+          this.props.handleUpdateWifi(updated_object(this.props.wifi, 'password', event.target.value))
+        },
+
+        render: function() {
+          var wifiGui = (
+            <div>
+              <button className="btn btn-xs" onClick={this.handleEnableWifi}>Enable Wi-Fi</button>
+              <br/><br/>
+              Wi-Fi is disabled. You must have a LAN cable connected to your PI.
+            </div>
+          );
+          if (this.props.wifi != null) {
+            wifiGui = (
+              <form>
+                <button className="btn btn-xs" onClick={this.handleDisableWifi}>Disable Wi-Fi</button>
+                <br/><br/>
+                <div className="form-group">
+                  <label htmlFor="ssid">SSID</label>
+                  <input type="email" className="form-control" id="ssid"
+                    placeholder="SSID (your accesspoint name)" value={this.props.wifi.ssid}
+                    onChange={this.handleUpdateSSID}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="password">WPA Password</label>
+                  <input type="password" className="form-control" id="password" 
+                    placeholder="Password" value={this.props.wifi.password}
+                    onChange={this.handleUpdatePassword}
+                  />
+                </div>
+              </form>
+            );
+          }
+          return (
+            <div className="panel panel-default">
+              <div className="panel-heading">
+                <h3 className="panel-title">Wi-Fi</h3>
+              </div>
+              <div className="panel-body">
+                {wifiGui}
+              </div>
+            </div>
+          );
+        }
+      });
+
+      var Branding = React.createClass({
+        handleImage: function(event) {
+          var self = this;
+          var reader = new FileReader();
+          reader.onload = function(evt) {
+            if (evt.target.readyState != 2) return;
+            if(evt.target.error) {
+              alert('Error while reading file');
+              return;
+            }
+            self.props.handleUpdateBranding(evt.target.result);
+          };
+          reader.readAsBinaryString(event.target.files[0]);
+        },
+
+        handleRemoveImage: function(event) {
+          this.props.handleUpdateBranding(null);
+        },
+
+        render: function() {
+          var brandingGui = (
+            <form>
+              <div>Recommended format is 16:9. Only JPEGs supported.</div>
+              <br/>
+              <input type="file" id="branding" onChange={this.handleImage}/>
+            </form> 
+          );
+          if (this.props.image != null) {
+            var brandingDataUri = "data:image/jpeg;base64," + btoa(this.props.image);
+            brandingGui = (
+              <div>
+                <img width="320" height="180" src={brandingDataUri}/>
+                <br/>
+                <br/>
+                <button className="btn btn-xs" onClick={this.handleRemoveImage}>
+                  <span className="glyphicon glyphicon-remove"></span>
+                  Remove branding image
+                </button>
+              </div>
+            );
+          }
+          return (
+            <div className="panel panel-default">
+              <div className="panel-heading">
+                <h3 className="panel-title">Branding (background image used during start up)</h3>
+              </div>
+              <div className="panel-body">
+                {brandingGui}
+              </div>
+            </div>
+          );
+        },
+      });
+
+      var Editor = React.createClass({
+        getInitialState: function() {
+          return {
+            branding: null,
+            wifi: null,
+            channel: "stable",
+            resolution: null,
+            network: null,
+          }
+        },
+
+        handleUpdateWifi: function(wifi) {
+          this.setState({wifi: wifi});
+        },
+
+        handleUpdateBranding: function(branding) {
+          this.setState({branding: branding});
+        },
+
+        handleUpdateChannel: function(channel) {
+          this.setState({channel: channel});
+        },
+
+        handleUpdateResolution: function(resolution) {
+          this.setState({resolution: resolution});
+        },
+
+        handleUpdateNetwork: function(network) {
+          this.setState({network: network});
+          console.log(network);
+        },
+
+        handleDownload: function(event) {
+          var zip = new JSZip();
+          var config = zip.folder("config");
+          if (this.state.branding)
+            config.file("branding.jpg", this.state.branding);
+          if (this.state.resolution)
+            config.file("tvservice", this.state.resolution);
+          if (this.state.wifi)
+            config.file("wireless", 
+                this.state.wifi.ssid + "\n" +
+                this.state.wifi.password + "\n");
+          if (this.state.network)
+            config.file("network", 
+                this.state.network.addr + "\n" +
+                this.state.network.mask + "\n" +
+                this.state.network.gw + "\n" +
+                this.state.network.dns + "\n");
+          config.file("channel", this.state.channel);
+          var blob = zip.generate({type:"blob"});
+          saveAs(blob, "config.zip");
+          event.preventDefault();
+        },
+
+        render: function() {
+          return (
+            <div className="container">
+              <h1>info-beamer os configuration tool</h1>
+              <p>
+                This website makes it easy to create a configuration directory for the 
+                <a href="https://info-beamer.com/hosted"> info-beamer hosted operation system</a>.
+                Learn more about it on the 
+                <a href="https://info-beamer.com/doc/device-configuration"> device configuration page</a>.
+              </p>
+              <div className="row">
+                <div className="col-md-5">
+                  <Wifi handleUpdateWifi={this.handleUpdateWifi} wifi={this.state.wifi}/>
+                  <Network handleUpdateNetwork={this.handleUpdateNetwork} network={this.state.network}/>
+                </div>
+                <div className="col-md-7">
+                  <Branding handleUpdateBranding={this.handleUpdateBranding} image={this.state.branding}/>
+                  <Resolution handleUpdateResolution={this.handleUpdateResolution} resolution={this.state.resolution}/>
+                  <Channel handleUpdateChannel={this.handleUpdateChannel} channel={this.state.channel}/>
+                </div>
+              </div>
+              <button className="btn btn-primary" onClick={this.handleDownload}>Download config.zip</button> then extract it to your info-beamer SD card
+            </div>
+          );
+        },
+      });
+
+      React.render(
+        <Editor/>,
+        document.getElementById('editor')
+      );
+    </script>
+  </body>
+</html>
