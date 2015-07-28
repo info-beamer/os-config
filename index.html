@@ -358,7 +358,7 @@
           var zip = new JSZip();
           var config = zip.folder("config");
           if (this.state.branding)
-            config.file("branding.jpg", this.state.branding);
+            config.file("branding.jpg", this.state.branding, {binary:true});
           if (this.state.resolution)
             config.file("tvservice", this.state.resolution);
           if (this.state.wifi)
