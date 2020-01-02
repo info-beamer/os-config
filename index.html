@@ -29,7 +29,7 @@
           } else {
             this.props.handleUpdateResolution(null);
           }
-        }, 
+        },
 
         handleUpdateCEAMode: function(event) {
           this.props.handleUpdateResolution("CEA " + event.target.value);
@@ -125,6 +125,32 @@
           );
         }
       });
+
+
+            var ScalingGovernor = React.createClass({
+              handleSelectScalingGovernor: function(event) {
+                this.props.handleUpdateScalingGovernor(event.target.value);
+              },
+
+              render: function() {
+                return (
+                  <div className="panel panel-default">
+                    <div className="panel-heading">
+                      <h3 className="panel-title">Scaling Governor</h3>
+                    </div>
+                    <div className="panel-body">
+                      <form className="form-inline">
+                        <select className="form-control" onChange={this.handleSelectScalingGovernor} value={this.props.scaling_governor}>
+                          <option value="ondemand">ondemand (recommended)</option>
+                          <option value="powersave">powersave</option>
+                          <option value="performance">performance</option>
+                        </select>
+                      </form>
+                    </div>
+                  </div>
+                );
+              }
+            });
 
       var Network = React.createClass({
         handleEnableManual: function(event) {
@@ -247,7 +273,7 @@
                 </div>
                 <div className="form-group">
                   <label htmlFor="password">WPA Password</label>
-                  <input type="password" className="form-control" id="password" 
+                  <input type="password" className="form-control" id="password"
                     placeholder="Password" value={this.props.wifi.password}
                     onChange={this.handleUpdatePassword}
                   />
@@ -293,7 +319,7 @@
               <div>Recommended format is 16:9. Only JPEGs supported.</div>
               <br/>
               <input type="file" id="branding" onChange={this.handleImage}/>
-            </form> 
+            </form>
           );
           if (this.props.image != null) {
             var brandingDataUri = "data:image/jpeg;base64," + btoa(this.props.image);
@@ -345,6 +371,10 @@
           this.setState({channel: channel});
         },
 
+        handleUpdateScalingGovernor: function(scaling_governor) {
+          this.setState({scaling_governor: scaling_governor});
+        },
+
         handleUpdateResolution: function(resolution) {
           this.setState({resolution: resolution});
         },
@@ -362,16 +392,17 @@
           if (this.state.resolution)
             config.file("tvservice", this.state.resolution);
           if (this.state.wifi)
-            config.file("wireless", 
+            config.file("wireless",
                 this.state.wifi.ssid + "\n" +
                 this.state.wifi.password + "\n");
           if (this.state.network)
-            config.file("network", 
+            config.file("network",
                 this.state.network.addr + "\n" +
                 this.state.network.mask + "\n" +
                 this.state.network.gw + "\n" +
                 this.state.network.dns + "\n");
           config.file("channel", this.state.channel);
+          config.file("scaling_governor", this.state.scaling_governor);
           var blob = zip.generate({type:"blob"});
           saveAs(blob, "config.zip");
           event.preventDefault();
@@ -382,9 +413,9 @@
             <div className="container">
               <h1>info-beamer os configuration tool</h1>
               <p>
-                This website makes it easy to create a configuration directory for the 
+                This website makes it easy to create a configuration directory for the
                 <a href="https://info-beamer.com/hosted"> info-beamer hosted operation system</a>.
-                Learn more about it on the 
+                Learn more about it on the
                 <a href="https://info-beamer.com/doc/device-configuration"> device configuration page</a>.
               </p>
               <div className="row">
@@ -396,6 +427,7 @@
                   <Branding handleUpdateBranding={this.handleUpdateBranding} image={this.state.branding}/>
                   <Resolution handleUpdateResolution={this.handleUpdateResolution} resolution={this.state.resolution}/>
                   <Channel handleUpdateChannel={this.handleUpdateChannel} channel={this.state.channel}/>
+                  <ScalingGovernor handleUpdateScalingGovernor={this.handleUpdateScalingGovernor} scaling_governor={this.state.scaling_governor}/>
                 </div>
               </div>
               <button className="btn btn-primary" onClick={this.handleDownload}>Download config.zip</button> then extract it to your info-beamer SD card
